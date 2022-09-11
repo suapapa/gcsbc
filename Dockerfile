@@ -25,8 +25,6 @@ COPY --from=builder /go/bin/gcsfuse /usr/bin
 
 ## install all
 COPY --from=builder /build/app .
-COPY --from=builder /build/post_start.sh /bin/
-COPY --from=builder /build/pre_stop.sh /bin/
 
 RUN mkdir /bucket
 

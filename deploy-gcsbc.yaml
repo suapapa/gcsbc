@@ -30,8 +30,10 @@ spec:
       labels:
         app: asset
     spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: work-pool
       containers:
-      - image: 'gcr.io/homin-dev/gcsbc:latest'
+      - image: "gcr.io/homin-dev/gcsbc:latest"
         # args: ["-r", "/bucket/"]
         name: asset
         ports:
@@ -41,8 +43,9 @@ spec:
             value: homin-dev_asset
         volumeMounts:
           - name: sa-key
-            readOnly: true
+            subPath: gcsbc-key.json
             mountPath: "/sa-key.json"
+            readOnly: true
         securityContext:
           privileged: true
           capabilities:
@@ -51,11 +54,11 @@ spec:
         lifecycle:
           postStart:
             exec:
-              command: ["post_start.sh"]
+              command: ["/bin/sh", "-c", "gcsfuse --implicit-dirs --key-file=/sa-key.json ${BUCKET_NAME} /bucket"]
           preStop:
             exec:
-              command: ["pre_stop.sh"]
+              command: ["/bin/sh", "-c", "fusermount -u /bucket"]
       volumes:
         - name: sa-key
           secret:
-            secretName: gcsbc-key.json
+            secretName: sa-key

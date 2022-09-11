@@ -66,8 +66,8 @@ docker run -it --rm \
 Mount bucket and run cache filer server (inside container):
 
 ```bash
-# post_start.sh
-# /app -r /bucket/
+$ gcsfuse --implicit-dirs --key-file=/sa-key.json ${BUCKET_NAME} /bucket
+$ /app -r /bucket
 ```
 
 Check bucket contents accessable from host browser.
@@ -77,7 +77,7 @@ Check bucket contents accessable from host browser.
 Unmount bucket and exit (inside container)
 
 ```bash
-# pre_stop.sh
+fusermount -u ${BUCKET_NAME}
 # Press Ctrl-D
 ```
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	"net/url"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -26,7 +26,6 @@ func main() {
 		100, //filecache.DefaultMaxItems,
 		"max number of files to store in the cache")
 	fPort := flag.Int("p", 8080, "port to listen on")
-	fChroot := flag.Bool("r", false, "chroot to the working directory")
 	fSize := flag.Int64("s", filecache.DefaultMaxSize, "max file size to cache")
 	fUser := flag.String("u", "", "user to run as")
 	fSubPathRoot := flag.String("f", "", "remove prefix subpath in url.PATH")
@@ -38,9 +37,6 @@ func main() {
 	if flag.NArg() > 0 {
 		srvWD = flag.Arg(0)
 	}
-	if *fChroot {
-		srvWD = chroot(srvWD)
-	}
 
 	if *fUser != "" {
 		setuid(*fUser)
@@ -48,9 +44,8 @@ func main() {
 
 	srvWD, err := filepath.Abs(srvWD)
 	chk(err)
-	err = os.Chdir(srvWD)
-	chk(err)
 	cache := &filecache.FileCache{
+		Root:       srvWD,
 		MaxSize:    *fSize,
 		MaxItems:   *fItems,
 		ExpireItem: *fExpire,
@@ -74,8 +69,6 @@ func main() {
 		}()
 	}
 
-	srvAddr := fmt.Sprintf(":%d", *fPort)
-	fmt.Printf("serving %s on %s\n", srvWD, srvAddr)
 	http.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
 			if *fSubPathRoot != "" {
@@ -85,10 +78,16 @@ func main() {
 					r.URL.Path = "/" + strings.Join(origPaths[1:], "/")
 				}
 			}
+			log.Printf("URL.Host=%s, URL.Path=%s", r.URL.Host, r.URL.Path)
+			q, e := url.QueryUnescape(r.URL.String())
+			log.Println(q, e)
 
 			filecache.HttpHandler(cache)(w, r)
 		},
 	)
+
+	srvAddr := fmt.Sprintf(":%d", *fPort)
+	fmt.Printf("serving %s on %s\n", srvWD, srvAddr)
 	if err := http.ListenAndServe(srvAddr, nil); err != nil {
 		log.Fatal(err)
 	}

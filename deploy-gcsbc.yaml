@@ -34,7 +34,7 @@ spec:
         cloud.google.com/gke-nodepool: work-pool
       containers:
       - image: "gcr.io/homin-dev/gcsbc:latest"
-        # args: ["-r", "/bucket/"]
+        # args: ["-f", "asset" "/bucket/"]
         name: asset
         ports:
           - containerPort: 8080
@@ -57,7 +57,7 @@ spec:
               command: ["/bin/sh", "-c", "gcsfuse --implicit-dirs --key-file=/sa-key.json ${BUCKET_NAME} /bucket"]
           preStop:
             exec:
-              command: ["/bin/sh", "-c", "fusermount -u /bucket"]
+              command: ["/bin/sh", "-c", "fusermount -u ${BUCKET_NAME}"]
       volumes:
         - name: sa-key
           secret:

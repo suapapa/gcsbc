@@ -1,2 +1,2 @@
-github.com/gokyle/filecache v0.0.0-20220803205700-e8a4791094b7 h1:3gJ2QkloUp1Caiv1olQ1IVttUBgJ8yOriikXlAFJ3n4=
-github.com/gokyle/filecache v0.0.0-20220803205700-e8a4791094b7/go.mod h1:gsCXtHUgZx0q6mcY1rxaEmtQVfBfJhOHkBTSLploDn4=
+github.com/suapapa/filecache v0.0.1 h1:u1IZtGblO3/ru7uP47rT+7NBYZiqN3hHPurpED26kTc=
+github.com/suapapa/filecache v0.0.1/go.mod h1:2ZIsU+17z2H/dAUinc/2lAPtA2TeWgroM3uQZndpfyM=

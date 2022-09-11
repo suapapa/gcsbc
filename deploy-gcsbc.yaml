@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: asset
+  labels:
+    app: asset
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: asset
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: asset
+  name: asset
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asset
+  template:
+    metadata:
+      labels:
+        app: asset
+    spec:
+      containers:
+      - image: 'gcr.io/homin-dev/gcsbc:latest'
+        # args: ["-r", "/bucket/"]
+        name: asset
+        ports:
+          - containerPort: 8080
+        env:
+          - name: BUCKET_NAME
+            value: homin-dev_asset
+        volumeMounts:
+          - name: sa-key
+            readOnly: true
+            mountPath: "/sa-key.json"
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+        lifecycle:
+          postStart:
+            exec:
+              command: ["post_start.sh"]
+          preStop:
+            exec:
+              command: ["pre_stop.sh"]
+      volumes:
+        - name: sa-key
+          secret:
+            secretName: gcsbc-key.json

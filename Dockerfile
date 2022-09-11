@@ -1,7 +1,8 @@
 # builder
 FROM golang:alpine AS builder
 
-# RUN apk --update --no-cache add git fuse-dev
+# RUN apt-get -qq update && \
+#     apt-get install -yqq upx
 
 ## build gcsfuse v0.41.6 is latest release at point of writing (2022-09-11)
 ARG GCSFUSE_VERSION=v0.41.6

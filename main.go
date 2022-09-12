@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
-	"os/user"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gokyle/filecache"
@@ -27,7 +23,6 @@ func main() {
 		"max number of files to store in the cache")
 	fPort := flag.Int("p", 8080, "port to listen on")
 	fSize := flag.Int64("s", filecache.DefaultMaxSize, "max file size to cache")
-	fUser := flag.String("u", "", "user to run as")
 	fSubPathRoot := flag.String("f", "", "remove prefix subpath in url.PATH")
 	fDumpCache := flag.String("d", "",
 		"dump cache stats duration; by default, this is turned off. Must be parsable with time.ParseDuration.")
@@ -36,10 +31,6 @@ func main() {
 	srvWD := "."
 	if flag.NArg() > 0 {
 		srvWD = flag.Arg(0)
-	}
-
-	if *fUser != "" {
-		setuid(*fUser)
 	}
 
 	srvWD, err := filepath.Abs(srvWD)
@@ -78,9 +69,9 @@ func main() {
 					r.URL.Path = "/" + strings.Join(origPaths[1:], "/")
 				}
 			}
-			log.Printf("URL.Host=%s, URL.Path=%s", r.URL.Host, r.URL.Path)
-			q, e := url.QueryUnescape(r.URL.String())
-			log.Println(q, e)
+			// log.Printf("URL.Host=%s, URL.Path=%s", r.URL.Host, r.URL.Path)
+			// q, e := url.QueryUnescape(r.URL.String())
+			// log.Println(q, e)
 
 			filecache.HttpHandler(cache)(w, r)
 		},
@@ -91,21 +82,6 @@ func main() {
 	if err := http.ListenAndServe(srvAddr, nil); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func setuid(username string) {
-	usr, err := user.Lookup(username)
-	chk(err)
-	uid, err := strconv.Atoi(usr.Uid)
-	chk(err)
-	err = syscall.Setreuid(uid, uid)
-	chk(err)
-}
-
-func chroot(path string) string {
-	err := syscall.Chroot(path)
-	chk(err)
-	return "/"
 }
 
 func displayCacheStats(cache *filecache.FileCache) {

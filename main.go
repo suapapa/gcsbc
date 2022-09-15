@@ -90,7 +90,7 @@ func main() {
 
 func displayCacheStats(cache *filecache.FileCache) {
 	fmt.Printf("-----[ cache stats: %s ]-----\n",
-		time.Now().In(loc).Format("2006-01-02 15:04:05"))
+		time.Now().In(loc).Format(time.RFC3339))
 	fmt.Printf("files cached: %d (max: %d)\n", cache.Size(),
 		cache.MaxItems)
 	fmt.Printf("cache size: %d bytes (will cache files up to %d bytes)\n",

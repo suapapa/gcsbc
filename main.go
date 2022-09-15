@@ -12,9 +12,13 @@ import (
 	"github.com/gokyle/filecache"
 )
 
+var (
+	loc = time.FixedZone("KST", +9*60*60)
+)
+
 func main() {
 	fExpire := flag.Int("e",
-		0, // filecache.DefaultExpireItem
+		filecache.DefaultExpireItem,
 		"maximum number of seconds between accesses a file can stay in the cache")
 	fGarbage := flag.Int("g", filecache.DefaultEvery,
 		"scan the cache for expired items every <n> seconds")
@@ -86,7 +90,7 @@ func main() {
 
 func displayCacheStats(cache *filecache.FileCache) {
 	fmt.Printf("-----[ cache stats: %s ]-----\n",
-		time.Now().Format("2006-01-02 15:04:05"))
+		time.Now().In(loc).Format("2006-01-02 15:04:05"))
 	fmt.Printf("files cached: %d (max: %d)\n", cache.Size(),
 		cache.MaxItems)
 	fmt.Printf("cache size: %d bytes (will cache files up to %d bytes)\n",

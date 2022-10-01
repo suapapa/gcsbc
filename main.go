@@ -71,6 +71,10 @@ func main() {
 				origPaths := strings.Split(origURLPath, "/")
 				if len(origPaths) > 0 && origPaths[0] == strings.Trim(*fSubPathRoot, "/") {
 					r.URL.Path = "/" + strings.Join(origPaths[1:], "/")
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprint(w, "404")
+					return
 				}
 			}
 			// log.Printf("URL.Host=%s, URL.Path=%s", r.URL.Host, r.URL.Path)

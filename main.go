@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	loc = time.FixedZone("KST", +9*60*60)
+	loc       = time.FixedZone("KST", +9*60*60)
+	urlPrefix string
 )
 
 func main() {
@@ -27,10 +28,14 @@ func main() {
 		"max number of files to store in the cache")
 	fPort := flag.Int("p", 8080, "port to listen on")
 	fSize := flag.Int64("s", filecache.DefaultMaxSize, "max file size to cache")
-	fSubPathRoot := flag.String("f", "", "remove prefix subpath in url.PATH")
 	fDumpCache := flag.String("d", "",
 		"dump cache stats duration; by default, this is turned off. Must be parsable with time.ParseDuration.")
+	flag.StringVar(&urlPrefix, "f", "", "remove prefix subpath in url.PATH")
 	flag.Parse()
+
+	if urlPrefix != "" && !strings.HasPrefix(urlPrefix, "/") {
+		urlPrefix = "/" + urlPrefix
+	}
 
 	srvWD := "."
 	if flag.NArg() > 0 {
@@ -66,23 +71,33 @@ func main() {
 
 	http.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/" || r.URL.Path == "/"+(*fSubPathRoot) {
+			urlPath := r.URL.Path
+			if !strings.HasPrefix(urlPath, "/") {
+				urlPath = "/" + urlPath
+			}
+
+			firstURLPrefixEndIdx := strings.Index(urlPath[1:], "/") + 1
+			var urlPathPre, urlPathSur string
+			switch firstURLPrefixEndIdx {
+			case 0, len(urlPath): // wholeURL is prefix
+				urlPathPre = urlPath[:firstURLPrefixEndIdx]
+				urlPathSur = ""
+			default:
+				urlPathPre = urlPath[:firstURLPrefixEndIdx]
+				urlPathSur = urlPath[firstURLPrefixEndIdx:]
+			}
+
+			if urlPathSur == "" || strings.Compare(urlPrefix, urlPathPre) != 0 {
 				w.WriteHeader(http.StatusNotFound)
 				fmt.Fprintf(w, "404")
 				return
 			}
 
-			if *fSubPathRoot != "" {
-				origURLPath := strings.Trim(r.URL.Path, "/")
-				origPaths := strings.Split(origURLPath, "/")
-				if len(origPaths) > 0 && origPaths[0] == strings.Trim(*fSubPathRoot, "/") {
-					r.URL.Path = "/" + strings.Join(origPaths[1:], "/")
-				}
-			}
-			// log.Printf("URL.Host=%s, URL.Path=%s", r.URL.Host, r.URL.Path)
-			// q, e := url.QueryUnescape(r.URL.String())
-			// log.Println(q, e)
-
+			log.Printf(
+				"urlPrefix=%s, urlPath=%s, urlPathPre=%s, urlPathSur=%s",
+				urlPrefix, urlPath, urlPathPre, urlPathSur,
+			)
+			r.URL.Path = urlPathSur
 			filecache.HttpHandler(cache)(w, r)
 		},
 	)

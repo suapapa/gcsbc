@@ -43,7 +43,10 @@ func main() {
 	}
 
 	srvWD, err := filepath.Abs(srvWD)
-	chk(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cache := &filecache.FileCache{
 		Root:       srvWD,
 		MaxSize:    *fSize,
@@ -93,10 +96,10 @@ func main() {
 				return
 			}
 
-			log.Printf(
-				"urlPrefix=%s, urlPath=%s, urlPathPre=%s, urlPathSur=%s",
-				urlPrefix, urlPath, urlPathPre, urlPathSur,
-			)
+			// log.Printf(
+			// 	"urlPrefix=%s, urlPath=%s, urlPathPre=%s, urlPathSur=%s",
+			// 	urlPrefix, urlPath, urlPathPre, urlPathSur,
+			// )
 			r.URL.Path = urlPathSur
 			filecache.HttpHandler(cache)(w, r)
 		},
@@ -122,10 +125,4 @@ func displayCacheStats(cache *filecache.FileCache) {
 		fmt.Printf("\t* %s\n", name)
 	}
 	fmt.Printf("\n\n")
-}
-
-func chk(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }

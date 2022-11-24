@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	loc       = time.FixedZone("KST", +9*60*60)
-	urlPrefix string
+	loc        = time.FixedZone("KST", +9*60*60)
+	fURLPrefix string
 )
 
 func main() {
@@ -30,11 +30,11 @@ func main() {
 	fSize := flag.Int64("s", filecache.DefaultMaxSize, "max file size to cache")
 	fDumpCache := flag.String("d", "",
 		"dump cache stats duration; by default, this is turned off. Must be parsable with time.ParseDuration.")
-	flag.StringVar(&urlPrefix, "f", "", "remove prefix subpath in url.PATH")
+	flag.StringVar(&fURLPrefix, "f", "", "remove prefix subpath in url.PATH")
 	flag.Parse()
 
-	if urlPrefix != "" && !strings.HasPrefix(urlPrefix, "/") {
-		urlPrefix = "/" + urlPrefix
+	if !strings.HasPrefix(fURLPrefix, "/") {
+		fURLPrefix = "/" + fURLPrefix
 	}
 
 	srvWD := "."
@@ -79,18 +79,9 @@ func main() {
 				urlPath = "/" + urlPath
 			}
 
-			firstURLPrefixEndIdx := strings.Index(urlPath[1:], "/") + 1
-			var urlPathPre, urlPathSur string
-			switch firstURLPrefixEndIdx {
-			case 0, len(urlPath): // wholeURL is prefix
-				urlPathPre = urlPath[:firstURLPrefixEndIdx]
-				urlPathSur = ""
-			default:
-				urlPathPre = urlPath[:firstURLPrefixEndIdx]
-				urlPathSur = urlPath[firstURLPrefixEndIdx:]
-			}
+			urlPathPre, urlPathSur := splitURLPath(urlPath)
 
-			if urlPathSur == "" || strings.Compare(urlPrefix, urlPathPre) != 0 {
+			if urlPathSur == "" || strings.Compare(fURLPrefix, urlPathPre) != 0 {
 				w.WriteHeader(http.StatusNotFound)
 				fmt.Fprintf(w, "404")
 				return
@@ -125,4 +116,24 @@ func displayCacheStats(cache *filecache.FileCache) {
 		fmt.Printf("\t* %s\n", name)
 	}
 	fmt.Printf("\n\n")
+}
+
+/*
+func splitURLPath(urlPath string) (urlPathPre, urlPathSur string) {
+	firstURLPrefixEndIdx := strings.Index(urlPath[1:], "/") + 1
+	switch firstURLPrefixEndIdx {
+	case 0, len(urlPath): // wholeURL is prefix
+		urlPathPre = urlPath[:firstURLPrefixEndIdx]
+		urlPathSur = ""
+	default:
+		urlPathPre = urlPath[:firstURLPrefixEndIdx]
+		urlPathSur = urlPath[firstURLPrefixEndIdx:]
+	}
+	return
+}
+*/
+
+func splitURLPath(urlPath string) (urlPathPre, urlPathSur string) {
+	prefixLen := len(fURLPrefix)
+	return urlPath[:prefixLen], urlPath[prefixLen:]
 }
